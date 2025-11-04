@@ -1,0 +1,16 @@
+# JitPack build configuration for NetcoreSDKCapturer
+# Forces Java 17, installs necessary Android SDK components,
+# sets AndroidX properties and publishes the artifact to mavenLocal
+# so JitPack can provide it to consumers.
+
+jdk:
+  - openjdk17
+
+install:
+  # Ensure basic SDK components exist. Adjust platform/build-tools if you use another API level.
+  - sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+script:
+  - ./gradlew --version
+  - ./gradlew clean assemble -Pandroid.useAndroidX=true -Pandroid.enableJetifier=true --no-daemon --stacktrace
+  - ./gradlew publishToMavenLocal -Pandroid.useAndroidX=true -Pandroid.enableJetifier=true --no-daemon --stacktrace
