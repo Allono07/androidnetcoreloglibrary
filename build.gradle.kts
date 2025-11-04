@@ -134,7 +134,7 @@ publishing {
             url =uri("https://maven.pkg.github.com/Allono07/androidnetcoreloglibrary")
             credentials{
                 username = "Allono07"
-                password ="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"
+                password =project.findProperty("gpr.token") as String??: System.getenv("GPR_TOKEN")
             }
         }
     }
