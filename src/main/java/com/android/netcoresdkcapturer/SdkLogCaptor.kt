@@ -146,6 +146,7 @@ class SdkLogCaptor private constructor(private val context: Context) {
          * @param context Application context
          * @return SdkLogCaptor instance
          */
+        @JvmStatic
         fun getInstance(context: Context): SdkLogCaptor {
             return INSTANCE ?: synchronized(this) {
                 val instance = SdkLogCaptor(context.applicationContext)
