@@ -8,9 +8,21 @@ jdk:
 
 install:
   # Ensure basic SDK components exist. Adjust platform/build-tools if you use another API level.
-  - sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+  # We'll install SDK components below using a Java 8 JVM because the
+  # older sdkmanager binary needs JAXB (javax.xml.bind) which is not
+  # present on newer JDKs. We'll switch to Java 17 afterwards for the
+  # Android Gradle Plugin.
 
 script:
   - ./gradlew --version
+  # Use Java 8 to run sdkmanager (fixes javax.xml.bind NoClassDefFoundError)
+  - sdk install java 8.0.362-zulu || true
+  - sdk use 8.0.362-zulu
+  - echo "Using Java: $(java -version 2>&1 | head -n 1)"
+  - sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+  # Switch to Java 17 for Android Gradle Plugin and build
+  - sdk install java 17.0.14-amzn || true
+  - sdk use 17.0.14-amzn
+  - echo "Using Java: $(java -version 2>&1 | head -n 1)"
   - ./gradlew clean assemble -Pandroid.useAndroidX=true -Pandroid.enableJetifier=true --no-daemon --stacktrace
   - ./gradlew publishToMavenLocal -Pandroid.useAndroidX=true -Pandroid.enableJetifier=true --no-daemon --stacktrace
