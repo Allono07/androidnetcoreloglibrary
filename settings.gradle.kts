@@ -4,10 +4,13 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
-      plugins {
+  // Pin plugin versions centrally so applied plugins (Kotlin, KSP, AGP)
+  // use a consistent, compatible set. This prevents cases where KSP
+  // cannot find Kotlin compiler classes at plugin initialization time.
+  plugins {
     id("com.android.library") version "8.1.4"
-    id("org.jetbrains.kotlin.android") version "2.1.0"
-    id("com.google.devtools.ksp") version "1.9.10-1.0.13"
+    id("org.jetbrains.kotlin.android") version "2.2.20"
+    id("com.google.devtools.ksp") version "2.3.1"
   }
 }
 
@@ -20,4 +23,3 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "netcore-sdk-capturer"
-include(":NetcoreSDKCapturer")

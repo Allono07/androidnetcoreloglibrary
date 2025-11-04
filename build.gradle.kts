@@ -1,13 +1,14 @@
+
 plugins {
-    id("com.android.library") 
-    id("org.jetbrains.kotlin.android") 
+    id("com.android.library") version "8.9.1"
+    id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
     id("maven-publish")
-    id("signing")
+
 }
 
 // SDK version
-val sdkVersion = "1.0.0"
+val sdkVersion = "0.0.beta"
 val sdkGroupId = "com.android.netcoresdkcapturer"
 val sdkArtifactId = "netcore-sdk-capturer"
 
@@ -57,9 +58,9 @@ dependencies {
     implementation("com.google.android.material:material:1.13.0")
     
     // Room Database
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    ksp("androidx.room:room-compiler:2.6.1")
+    implementation("androidx.room:room-runtime:2.8.3")
+    implementation("androidx.room:room-ktx:2.8.3")
+    ksp("androidx.room:room-compiler:2.8.3")
     
     // Lifecycle
     implementation("androidx.lifecycle:lifecycle-process:2.9.4")
@@ -68,7 +69,7 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.11.0")
     
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
@@ -90,7 +91,7 @@ publishing {
             pom {
                 name.set("Netcore SDK Capturer")
                 description.set("Android SDK for capturing and uploading Netcore Smartech event logs")
-                url.set("https://github.com/Allono07/assignmentAppJava")
+                url.set("https://github.com/Allono07/androidnetcoreloglibrary.git")
                 
                 licenses {
                     license {
@@ -103,35 +104,43 @@ publishing {
                     developer {
                         id.set("allono07")
                         name.set("Allen Thomson")
-                        email.set("your-email@example.com") // Update this
+                        email.set("allono.at@gmail.com") // Update this
                     }
                 }
                 
                 scm {
-                    connection.set("scm:git:git://github.com/YourGithubUsername/YourRepoName.git")
-                    developerConnection.set("scm:git:ssh://github.com/YourGithubUsername/YourRepoName.git")
-                    url.set("https://github.com/YourGithubUsername/YourRepoName")
+                    connection.set("scm:git:git://github.com/Allono07/androidnetcoreloglibrary.git")
+                    developerConnection.set("scm:git:ssh://github.com/Allono07/androidnetcoreloglibrary.git")
+                    url.set("https://github.com/Allono07/androidnetcoreloglibrary")
                 }
             }
         }
     }
 
     repositories {
-        maven {
-            name = "sonatype"
-            val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-            val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-            
-            credentials {
-                username = project.findProperty("ossrhUsername") as String? ?: System.getenv("OSSRH_USERNAME")
-                password = project.findProperty("ossrhPassword") as String? ?: System.getenv("OSSRH_PASSWORD")
+//        maven {
+//            name = "sonatype"
+//            val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+//            val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+//            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+//
+//            credentials {
+//                username = project.findProperty("ossrhUsername") as String? ?: System.getenv("OSSRH_USERNAME")
+//                password = project.findProperty("ossrhPassword") as String? ?: System.getenv("OSSRH_PASSWORD")
+//            }
+
+        maven{
+            name ="GithubPackages"
+            url =uri("https://maven.pkg.github.com/Allono07/androidnetcoreloglibrary")
+            credentials{
+                username = "Allono07"
+                password ="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"
             }
         }
     }
 }
 
 // Signing configuration (required for Maven Central)
-signing {
-    sign(publishing.publications["release"])
-}
+//signing {
+//    sign(publishing.publications["release"])
+//}
