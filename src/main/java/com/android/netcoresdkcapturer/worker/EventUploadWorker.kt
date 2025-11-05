@@ -11,7 +11,6 @@ import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.TimeUnit
-import java.util.zip.GZIPOutputStream
 
 class EventUploadWorker(
     context: Context,
@@ -36,7 +35,7 @@ class EventUploadWorker(
 
             Log.d("EventUpload", "Uploading ${events.size} events")
 
-            // Compress and upload
+            // Upload (plain text, no gzip) so backends that expect text can parse directly
             val success = uploadEvents(events, webhookUrl)
 
             if (success) {
@@ -75,17 +74,16 @@ class EventUploadWorker(
             val url = URL(endpoint)
             val conn = url.openConnection() as HttpURLConnection
             conn.requestMethod = "POST"
-            conn.setRequestProperty("Content-Type", "text/plain")
-            conn.setRequestProperty("Content-Encoding", "gzip")
+            // Send plain text so servers that expect the "Event Payload: {...}" format can parse it directly
+            conn.setRequestProperty("Content-Type", "text/plain; charset=utf-8")
             conn.connectTimeout = 30000
             conn.readTimeout = 30000
             conn.doOutput = true
 
-            // Compress payload
+            // Write uncompressed payload
             conn.outputStream.use { outputStream ->
-                GZIPOutputStream(outputStream).use { gzipStream ->
-                    gzipStream.write(payloadText.toByteArray())
-                }
+                outputStream.write(payloadText.toByteArray(Charsets.UTF_8))
+                outputStream.flush()
             }
 
             val responseCode = conn.responseCode
