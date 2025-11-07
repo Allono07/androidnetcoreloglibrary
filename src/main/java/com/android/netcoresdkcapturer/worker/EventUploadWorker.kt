@@ -6,8 +6,11 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.android.netcoresdkcapturer.database.CapturedEvent
 import com.android.netcoresdkcapturer.database.EventDatabase
+import com.android.netcoresdkcapturer.SdkLogCaptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.work.WorkManager
+import android.content.SharedPreferences
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.TimeUnit
@@ -36,9 +39,38 @@ class EventUploadWorker(
             Log.d("EventUpload", "Uploading ${events.size} events")
 
             // Upload (plain text, no gzip) so backends that expect text can parse directly
-            val success = uploadEvents(events, webhookUrl)
+            val responseCode = uploadEvents(events, webhookUrl)
 
-            if (success) {
+            if (responseCode == 444) {
+                Log.w("EventUpload", "Server returned 444 — app no longer available on server; disabling SDK permanently")
+
+                // Delete all pending events from the database (don't save anything)
+                val deletedCount = database.eventDao().deleteAllEvents()
+                Log.d("EventUpload", "Deleted $deletedCount pending events from database")
+
+                // Set a persistent flag to prevent future uploads for this webhook
+                val prefs = applicationContext.getSharedPreferences("com.android.netcoresdkcapturer.prefs", Context.MODE_PRIVATE)
+                prefs.edit().putBoolean("uploads_disabled_${webhookUrl.hashCode()}", true).apply()
+
+                // Stop capturing and cancel periodic work via SdkLogCaptor
+                try {
+                    SdkLogCaptor.getInstance(applicationContext).disablePermanently(webhookUrl)
+                } catch (e: Exception) {
+                    Log.w("EventUpload", "Failed to disable SdkLogCaptor: ${e.message}")
+                }
+
+                // Cancel periodic upload work (best-effort)
+                try {
+                    WorkManager.getInstance(applicationContext).cancelUniqueWork("event_upload_periodic")
+                } catch (e: Exception) {
+                    Log.w("EventUpload", "Failed to cancel periodic work: ${e.message}")
+                }
+
+                Log.d("EventUpload", "SDK disabled permanently; all events deleted and uploads stopped")
+                return@withContext Result.success()
+            }
+
+            if (responseCode in 200..299) {
                 database.eventDao().markAsUploaded(events.map { it.id })
 
                 // Cleanup old uploaded events (older than 7 days)
@@ -54,7 +86,7 @@ class EventUploadWorker(
                 // Delete events that have failed too many times
                 database.eventDao().deleteFailedEvents(maxRetries = 5)
 
-                Log.e("EventUpload", "Upload failed, will retry")
+                Log.e("EventUpload", "Upload failed, will retry (response code/status false)")
                 Result.retry()
             }
         } catch (e: Exception) {
@@ -63,7 +95,7 @@ class EventUploadWorker(
         }
     }
 
-    private fun uploadEvents(events: List<CapturedEvent>, endpoint: String): Boolean {
+    private fun uploadEvents(events: List<CapturedEvent>, endpoint: String): Int {
         return try {
             val payloadText = buildString {
                 for (event in events) {
@@ -89,10 +121,10 @@ class EventUploadWorker(
             val responseCode = conn.responseCode
             conn.disconnect()
 
-            responseCode == 200
+            responseCode
         } catch (e: Exception) {
             Log.e("EventUpload", "Network error: ${e.message}", e)
-            false
+            -1
         }
     }
 }

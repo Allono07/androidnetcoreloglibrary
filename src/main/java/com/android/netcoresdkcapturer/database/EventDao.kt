@@ -26,4 +26,7 @@ interface EventDao {
 
     @Query("DELETE FROM captured_events WHERE retryCount > :maxRetries")
     suspend fun deleteFailedEvents(maxRetries: Int)
+
+    @Query("DELETE FROM captured_events")
+    suspend fun deleteAllEvents(): Int
 }

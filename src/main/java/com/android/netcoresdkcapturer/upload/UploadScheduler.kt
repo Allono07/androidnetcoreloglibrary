@@ -8,6 +8,12 @@ import java.util.concurrent.TimeUnit
 class UploadScheduler(private val context: Context) {
 
     fun schedulePeriodicUpload(webhookUrl: String) {
+        // Respect a persistent flag set by EventUploadWorker when the server indicates the app is no longer available
+        val prefs = context.getSharedPreferences("com.android.netcoresdkcapturer.prefs", Context.MODE_PRIVATE)
+        if (prefs.getBoolean("uploads_disabled_${webhookUrl.hashCode()}", false)) {
+            android.util.Log.w("UploadScheduler", "Uploads disabled for webhook; skipping periodic scheduling")
+            return
+        }
         val uploadWork = PeriodicWorkRequestBuilder<EventUploadWorker>(
             15, TimeUnit.MINUTES,
             5, TimeUnit.MINUTES
@@ -37,6 +43,12 @@ class UploadScheduler(private val context: Context) {
     }
 
     fun scheduleImmediateUpload(webhookUrl: String) {
+        // Respect persistent disable flag
+        val prefs = context.getSharedPreferences("com.android.netcoresdkcapturer.prefs", Context.MODE_PRIVATE)
+        if (prefs.getBoolean("uploads_disabled_${webhookUrl.hashCode()}", false)) {
+            android.util.Log.w("UploadScheduler", "Uploads disabled for webhook; skipping immediate upload")
+            return
+        }
         val uploadWork = OneTimeWorkRequestBuilder<EventUploadWorker>()
             .setConstraints(
                 Constraints.Builder()
